@@ -1,4 +1,5 @@
-﻿using AuthApi.Models.DTO;
+﻿using AuthApi.Models;
+using AuthApi.Models.DTO;
 using AuthApi.Repositories.Abstract;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
@@ -47,24 +48,27 @@ namespace AuthApi.Repositories.Domain
             }
         }
 
-        public TokenResponse GetToken(IdentityUser user)
+        public TokenResponse GetToken(IdentityUser user,IList<string> userRoles)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
             //var key = Encoding.UTF8.GetBytes(_jwtConfig.Secret);
             var key = Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value);
+            var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString()),
+                };
+            foreach (var userRole in userRoles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            }
 
             // Token Descriptor
             var tokenDescriptor = new SecurityTokenDescriptor()
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim("Id", user.Id),
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToUniversalTime().ToString())
-                }),
-
+                Subject = new ClaimsIdentity(authClaims),
                 Expires = DateTime.Now.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };

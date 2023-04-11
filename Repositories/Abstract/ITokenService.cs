@@ -7,7 +7,7 @@ namespace AuthApi.Repositories.Abstract
 {
     public interface ITokenService
     {
-        TokenResponse GetToken(IdentityUser user);
+        TokenResponse GetToken(IdentityUser user, IList<string> userRoles);
         TokenResponse GetrefToken(IEnumerable<Claim> claim);
         string GetRefreshToken();
         ClaimsPrincipal GetPrincipalFromExpiredToken(string token);

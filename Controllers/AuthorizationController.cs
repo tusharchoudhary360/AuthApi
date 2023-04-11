@@ -15,19 +15,22 @@ namespace AuthApi.Controllers
     public class AuthorizationController : ControllerBase
     {
         private readonly DatabaseContext _context;
+        private readonly IFileService _fileService;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly ITokenService _tokenService;
         public AuthorizationController(DatabaseContext context,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            ITokenService tokenService
+            ITokenService tokenService,
+            IFileService fs
             )
         {
             this._context = context;
             this.userManager = userManager;
             this.roleManager = roleManager;
             this._tokenService = tokenService;
+            this._fileService = fs;
         }
 
 
@@ -47,7 +50,7 @@ namespace AuthApi.Controllers
                 {
                     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
                 }
-                var token = _tokenService.GetToken(user);
+                var token = _tokenService.GetToken(user,userRoles);
                 var refreshToken = _tokenService.GetRefreshToken();
                 var tokenInfo = _context.TokenInfo.FirstOrDefault(a => a.Usename == user.UserName);
                 if (tokenInfo == null)
@@ -101,7 +104,7 @@ namespace AuthApi.Controllers
         //registration for user
 
         [HttpPost]
-        public async Task<IActionResult> Registration([FromBody] RegistrationModel model)
+        public async Task<IActionResult> Registration([FromForm] RegistrationModel model)
         {
             var status = new Status();
             if (!ModelState.IsValid)
@@ -118,6 +121,12 @@ namespace AuthApi.Controllers
                 status.Message = "Invalid username";
                 return Ok(status);
             }
+            if (model.ImageFile == null)
+            {
+                status.StatusCode = 0;
+                status.Message = "Please Upload an Image";
+                return Ok(status);
+            }
             var user = new ApplicationUser
             {
                 UserName = model.Username,
@@ -130,7 +139,8 @@ namespace AuthApi.Controllers
             if (!result.Succeeded)
             {
                 status.StatusCode = 0;
-                status.Message = "User creation failed";
+                string msg = result.ToString();
+                status.Message = msg;
                 return Ok(status);
             }
 
@@ -143,6 +153,26 @@ namespace AuthApi.Controllers
             {
                 await userManager.AddToRoleAsync(user, UserRoles.User);
             }
+            var fileResult = _fileService.SaveImage(model.ImageFile);
+
+            if (fileResult.Item1 == 1)
+            {
+                model.ProfileImage = fileResult.Item2;
+            }
+            var alluserInstance = new AllUsers
+            {
+                Username = model.Username,
+                Name = model.Name,
+                Email =model.Email,
+                PhoneNumber = model.PhoneNumber,
+                Gender = model.Gender,
+                Country =model.Country,
+                Hobby = (Models.Domain.Hobby)model.Hobby,
+                ProfileImage =model.ProfileImage,
+            };
+
+            await _context.AllUsers.AddAsync(alluserInstance);
+            await _context.SaveChangesAsync();
             status.StatusCode = 1;
             status.Message = "Sucessfully registered";
             return Ok(status);

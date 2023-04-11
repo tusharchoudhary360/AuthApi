@@ -10,5 +10,6 @@ namespace AuthApi.Models.Domain
 
         }
         public DbSet<TokenInfo> TokenInfo { get; set; }
+        public DbSet<AllUsers> AllUsers { get; set; }
     }
 }
