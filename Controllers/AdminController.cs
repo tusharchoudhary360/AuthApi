@@ -19,6 +19,7 @@ namespace AuthApi.Controllers
             _adminService = adminService;
         }
 
+        [HttpGet]
         public IActionResult GetData()
         {
             var status = new Status();

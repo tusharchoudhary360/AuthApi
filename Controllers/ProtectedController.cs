@@ -10,6 +10,7 @@ namespace AuthApi.Controllers
     [Authorize]
     public class ProtectedController : ControllerBase
     {
+        [HttpGet]
         public IActionResult GetData()
         {
             var status = new Status();

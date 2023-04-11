@@ -16,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.CustomSchemaIds(Hobby => Hobby.ToString());
+});
 
 builder.Services.AddDbContext<DatabaseContext>(optionsAction: options => options.UseSqlite(builder.Configuration.GetConnectionString(name: "DefaultConnection")));
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
