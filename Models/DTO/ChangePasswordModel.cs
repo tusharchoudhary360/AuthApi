@@ -5,7 +5,7 @@ namespace AuthApi.Models.DTO
     public class ChangePasswordModel
     {
         [Required]
-        public string Username { get; set; }
+        public string Email { get; set; }
         [Required]
         public string CurrentPassword { get; set; }
         [Required]

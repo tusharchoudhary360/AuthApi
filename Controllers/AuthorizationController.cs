@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 
 namespace AuthApi.Controllers
@@ -37,7 +38,7 @@ namespace AuthApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            var user = await userManager.FindByNameAsync(model.Username);
+            var user = await userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
                 return Ok(new Status(400, "user not exist", null));
@@ -49,23 +50,15 @@ namespace AuthApi.Controllers
             if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
             {
                 var userRoles = await userManager.GetRolesAsync(user);
-                var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.UserName),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                };
-                foreach (var userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                }
+                
                 var token = _tokenService.GetToken(user,userRoles);
                 var refreshToken = _tokenService.GetRefreshToken();
-                var tokenInfo = _context.TokenInfo.FirstOrDefault(a => a.Usename == user.UserName);
+                var tokenInfo = _context.TokenInfo.FirstOrDefault(a => a.Usename == user.Email);
                 if (tokenInfo == null)
                 {
                     var info = new TokenInfo
                     {
-                        Usename = user.UserName,
+                        Usename = user.Email,
                         RefreshToken = refreshToken,
                         RefreshTokenExpiry = DateTime.Now.AddDays(1)
                     };
@@ -90,6 +83,7 @@ namespace AuthApi.Controllers
                 {
                     Name = user.Name,
                     Username = user.UserName,
+                    Email =user.Email,
                     Token = token.TokenString,
                     RefreshToken = refreshToken,
                     Expiration = token.ValidTo
@@ -114,7 +108,12 @@ namespace AuthApi.Controllers
             var userExists = await userManager.FindByNameAsync(model.Username);
             if (userExists != null)
             {
-                return Ok(new Status(400, "invalid username", null));
+                return Ok(new Status(400, "Username already taken", null));
+            }
+            var emailExist = await userManager.FindByEmailAsync(model.Email);
+            if (emailExist != null)
+            {
+                return Ok(new Status(400, "Email already register", null));
             }
             if (model.ImageFile == null)
             {
@@ -131,10 +130,8 @@ namespace AuthApi.Controllers
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
             {
-                status.StatusCode = 0;
                 string msg = result.ToString();
-                status.Message = msg;
-                return Ok(status);
+                return Ok(new Status(200,msg, null));
             }
 
             // add roles here
@@ -183,7 +180,12 @@ namespace AuthApi.Controllers
             var userExists = await userManager.FindByNameAsync(model.Username);
             if (userExists != null)
             {
-                return Ok(new Status(400, "invalid username", null));
+                return Ok(new Status(400, "Username already taken", null));
+            }
+            var emailExist = await userManager.FindByEmailAsync(model.Email);
+            if (emailExist != null)
+            {
+                return Ok(new Status(400, "Email already register", null));
             }
             var user = new ApplicationUser
             {
@@ -223,11 +225,12 @@ namespace AuthApi.Controllers
                 return Ok(new Status(400, "please pass all the valid fields", null));
             }
             // lets find the user
-            var user = await userManager.FindByNameAsync(model.Username);
+            var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
-                return Ok(new Status(400, "invalid username", null));
+                return Ok(new Status(400, "invalid email", null));
             }
+
             // check current password
             if (!await userManager.CheckPasswordAsync(user, model.CurrentPassword))
             {
