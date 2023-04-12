@@ -3,6 +3,7 @@ using AuthApi.Models.DTO;
 using AuthApi.Repositories.Abstract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 
@@ -22,16 +23,23 @@ namespace AuthApi.Controllers
         [HttpGet]
         public IActionResult GetData()
         {
-            var status = new Status();
-            status.StatusCode = 1;
-            status.Message = "Data from admin controller";
-            return Ok(status);
+            string msg = "Data from admin controller";
+            return Ok(new Status(200, "Success", msg));
         }
 
         [HttpGet]
         public async Task<ActionResult<List<AllUsers>>> GetAllUsers()
         {
-            return await _adminService.GetAllUsers();
+            var result = await _adminService.GetAllUsers();
+            foreach (AllUsers res in result)
+            {
+                if (res.ProfileImage != null)
+                {
+                    string img = string.Format("https://localhost:7184/Resources/{0}", res.ProfileImage);
+                    res.ProfileImage = img;
+                }
+            }
+            return Ok(new Status(200, "Success", result));
         }
 
         [HttpGet("{id}")]
@@ -42,7 +50,12 @@ namespace AuthApi.Controllers
             {
                 return NotFound("User not exist");
             }
-            return Ok(result);
+            if (result.ProfileImage != null)
+            {
+                 string img = string.Format("https://localhost:7184/Resources/{0}", result.ProfileImage);
+                 result.ProfileImage = img;
+            }
+            return Ok(new Status(200, "Success", result));
         }
     }
 }

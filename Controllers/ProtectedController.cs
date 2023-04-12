@@ -13,10 +13,8 @@ namespace AuthApi.Controllers
         [HttpGet]
         public IActionResult GetData()
         {
-            var status = new Status();
-            status.StatusCode = 1;
-            status.Message = "Data from protected controller";
-            return Ok(status);
+            string msg = "Data from protected controller";
+            return Ok(new Status(200, "Success", msg));
         }
     }
 }

@@ -38,6 +38,14 @@ namespace AuthApi.Controllers
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var user = await userManager.FindByNameAsync(model.Username);
+            if (user == null)
+            {
+                return Ok(new Status(400, "user not exist", null));
+            }
+            if (!await userManager.CheckPasswordAsync(user, model.Password))
+            {
+                return Ok(new Status(400, "incorrect password", null));
+            }
             if (user != null && await userManager.CheckPasswordAsync(user, model.Password))
             {
                 var userRoles = await userManager.GetRolesAsync(user);
@@ -78,27 +86,18 @@ namespace AuthApi.Controllers
                     return BadRequest(ex.Message);
                 }
 
-                return Ok(new LoginResponse
+                return Ok(new Status(200, "Login Success",new LoginResponse
                 {
                     Name = user.Name,
                     Username = user.UserName,
                     Token = token.TokenString,
                     RefreshToken = refreshToken,
-                    Expiration = token.ValidTo,
-                    StatusCode = 1,
-                    Message = "Logged in"
-                });
+                    Expiration = token.ValidTo
+                }));
 
             }
             //login failed condition
-            return Ok(
-                new LoginResponse
-                {
-                    StatusCode = 0,
-                    Message = "Invalid Username or Password",
-                    Token = "",
-                    Expiration = null
-                });
+            return Ok(new Status(400, "Not able to login server error", null));
         }
 
         //registration for user
@@ -109,23 +108,17 @@ namespace AuthApi.Controllers
             var status = new Status();
             if (!ModelState.IsValid)
             {
-                status.StatusCode = 0;
-                status.Message = "Please pass all the required fields";
-                return Ok(status);
+                return Ok(new Status(400, "Please pass all the Fields", null));
             }
             // check if user exists
             var userExists = await userManager.FindByNameAsync(model.Username);
             if (userExists != null)
             {
-                status.StatusCode = 0;
-                status.Message = "Invalid username";
-                return Ok(status);
+                return Ok(new Status(400, "invalid username", null));
             }
             if (model.ImageFile == null)
             {
-                status.StatusCode = 0;
-                status.Message = "Please Upload an Image";
-                return Ok(status);
+                return Ok(new Status(400, "Please Upload an Image", null));
             }
             var user = new ApplicationUser
             {
@@ -173,9 +166,7 @@ namespace AuthApi.Controllers
 
             await _context.AllUsers.AddAsync(alluserInstance);
             await _context.SaveChangesAsync();
-            status.StatusCode = 1;
-            status.Message = "Sucessfully registered";
-            return Ok(status);
+            return Ok(new Status(200, "Successfully registered", null));
 
         }
 
@@ -186,17 +177,13 @@ namespace AuthApi.Controllers
             var status = new Status();
             if (!ModelState.IsValid)
             {
-                status.StatusCode = 0;
-                status.Message = "Please pass all the required fields";
-                return Ok(status);
+                return Ok(new Status(400, "Please pass all the Fields", null));
             }
             // check if user exists
             var userExists = await userManager.FindByNameAsync(model.Username);
             if (userExists != null)
             {
-                status.StatusCode = 0;
-                status.Message = "Invalid username";
-                return Ok(status);
+                return Ok(new Status(400, "invalid username", null));
             }
             var user = new ApplicationUser
             {
@@ -209,9 +196,7 @@ namespace AuthApi.Controllers
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
             {
-                status.StatusCode = 0;
-                status.Message = "User creation failed";
-                return Ok(status);
+                return Ok(new Status(400, "User creation failed", null));
             }
 
             // add roles here
@@ -223,9 +208,7 @@ namespace AuthApi.Controllers
             {
                 await userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
-            status.StatusCode = 1;
-            status.Message = "Sucessfully registered";
-            return Ok(status);
+            return Ok(new Status(200, "Successfully registered", null));
 
         }
 
@@ -237,37 +220,27 @@ namespace AuthApi.Controllers
             // check validations
             if (!ModelState.IsValid)
             {
-                status.StatusCode = 0;
-                status.Message = "please pass all the valid fields";
-                return Ok(status);
+                return Ok(new Status(400, "please pass all the valid fields", null));
             }
             // lets find the user
             var user = await userManager.FindByNameAsync(model.Username);
             if (user is null)
             {
-                status.StatusCode = 0;
-                status.Message = "invalid username";
-                return Ok(status);
+                return Ok(new Status(400, "invalid username", null));
             }
             // check current password
             if (!await userManager.CheckPasswordAsync(user, model.CurrentPassword))
             {
-                status.StatusCode = 0;
-                status.Message = "invalid current password";
-                return Ok(status);
+                return Ok(new Status(400, "invalid current password", null));
             }
 
             // change password here
             var result = await userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
             if (!result.Succeeded)
             {
-                status.StatusCode = 0;
-                status.Message = "Failed to change password";
-                return Ok(status);
+                return Ok(new Status(400, "Failed to change password", null));
             }
-            status.StatusCode = 1;
-            status.Message = "Password has changed successfully";
-            return Ok(result);
+            return Ok(new Status(200, "Password has changed successfully", result));
         }
 
     }
