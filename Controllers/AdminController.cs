@@ -4,8 +4,10 @@ using AuthApi.Repositories.Abstract;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
+using System.Security.Claims;
 
 namespace AuthApi.Controllers
 {
@@ -15,14 +17,18 @@ namespace AuthApi.Controllers
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
+        private readonly UserManager<ApplicationUser> userManager;
+     
         public AdminController(IAdminService adminService)
         {
             _adminService = adminService;
+            userManager = userManager;
         }
 
         [HttpGet]
-        public IActionResult GetData()
+        public async Task<IActionResult> GetDataAsync()
         {
+            var userClaims = HttpContext.User.Claims.ToList();
             string msg = "Data from admin controller";
             return Ok(new Status(200, "Success", msg));
         }
@@ -35,7 +41,7 @@ namespace AuthApi.Controllers
             {
                 if (res.ProfileImage != null)
                 {
-                    string img = string.Format("https://localhost:7184/Resources/{0}", res.ProfileImage);
+                    string img = string.Format("https://localhost:7184/Resources/ProfileImages/{0}", res.ProfileImage);
                     res.ProfileImage = img;
                 }
             }
@@ -48,11 +54,11 @@ namespace AuthApi.Controllers
             var result = await _adminService.GetSingleUser(id);
             if (result is null)
             {
-                return NotFound("User not exist");
+                return Ok(new Status(404, "User not exist",null));
             }
             if (result.ProfileImage != null)
             {
-                 string img = string.Format("https://localhost:7184/Resources/{0}", result.ProfileImage);
+                 string img = string.Format("https://localhost:7184/Resources/ProfileImages/{0}", result.ProfileImage);
                  result.ProfileImage = img;
             }
             return Ok(new Status(200, "Success", result));

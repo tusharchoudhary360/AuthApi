@@ -16,7 +16,7 @@ namespace AuthApi.Repositories.Domain
             try
             {
                 var contentPath = this.environment.ContentRootPath;
-                var path = Path.Combine(contentPath, "Uploads");
+                var path = Path.Combine(contentPath, "Uploads","ProfileImages");
                 if (!Directory.Exists(path))
                 {
                     Directory.CreateDirectory(path);

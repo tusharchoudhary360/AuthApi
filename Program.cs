@@ -55,6 +55,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddTransient<IFileService, FileService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddSwaggerGen(options =>
 {
