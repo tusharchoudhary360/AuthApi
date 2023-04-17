@@ -1,4 +1,5 @@
 using AuthApi.Models.Domain;
+using AuthApi.Models.DTO;
 using AuthApi.Repositories.Abstract;
 using AuthApi.Repositories.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,7 +13,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+var configuration = builder.Configuration;
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -51,11 +52,15 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+var emailConfig =configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
+
 
 builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddTransient<IFileService, FileService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddSwaggerGen(options =>
 {

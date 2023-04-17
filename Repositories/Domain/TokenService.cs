@@ -20,14 +20,15 @@ namespace AuthApi.Repositories.Domain
         }
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
         {
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = false,
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"])),
-                ValidateLifetime = false
-            };
+            var tokenValidationParameters = new TokenValidationParameters();
+
+            tokenValidationParameters.ValidateAudience = false;
+            tokenValidationParameters.ValidateIssuer = false;
+            tokenValidationParameters.ValidateIssuerSigningKey = true;
+            var ab = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value));
+            tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value));
+            tokenValidationParameters.ValidateLifetime = false;
+            
             var tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken;
 
@@ -76,27 +77,14 @@ namespace AuthApi.Repositories.Domain
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
             var jwtToken = jwtTokenHandler.WriteToken(token);
             return new TokenResponse { TokenString = jwtToken, ValidTo = token.ValidTo };
-            /*var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-            var token = new JwtSecurityToken(
-                
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
-                expires: DateTime.Now.AddDays(1),
-                claims: claim,
-                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                );
 
-            string tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return new TokenResponse { TokenString = tokenString, ValidTo = token.ValidTo };
-            */
         }
         public TokenResponse GetrefToken(IEnumerable<Claim> claim)
         {
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtConfig:Secret").Value));
             var token = new JwtSecurityToken(
-                issuer: _configuration["JWT:ValidIssuer"],
-                audience: _configuration["JWT:ValidAudience"],
+                issuer:null,
+                audience: null,
                 expires: DateTime.Now.AddDays(1),
                 claims: claim,
                 signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)

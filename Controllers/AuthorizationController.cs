@@ -17,6 +17,7 @@ namespace AuthApi.Controllers
     {
         private readonly DatabaseContext _context;
         private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
         private readonly UserManager<ApplicationUser> userManager;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly ITokenService _tokenService;
@@ -24,6 +25,7 @@ namespace AuthApi.Controllers
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
+            IEmailService emailService,
             IFileService fs
             )
         {
@@ -31,6 +33,7 @@ namespace AuthApi.Controllers
             this.userManager = userManager;
             this.roleManager = roleManager;
             this._tokenService = tokenService;
+            this._emailService = emailService;
             this._fileService = fs;
         }
 
@@ -246,5 +249,11 @@ namespace AuthApi.Controllers
             return Ok(new Status(200, "Password has changed successfully", result));
         }
 
+        [HttpPost]
+        public IActionResult SendEmail([FromForm] Message message)
+        {
+            _emailService.SendEmail(message);
+            return Ok(new Status(200, "Email Send Success", null));
+        }
     }
 }

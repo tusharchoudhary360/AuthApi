@@ -39,6 +39,7 @@ namespace AuthApi.Controllers
         [HttpGet]
         public IActionResult userDetails()
         {
+            var ab = User.Identities.ToList();
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
             var result = _userService.GetSingleUser(userEmail);
             var userinfo = result.Result;
@@ -48,7 +49,7 @@ namespace AuthApi.Controllers
             }
             if (userinfo.ProfileImage != null)
             {
-                string img = string.Format("https://localhost:7184/Resources/ProfileImages{0}", userinfo.ProfileImage);
+                string img = string.Format("https://localhost:7184/Resources/ProfileImages/{0}", userinfo.ProfileImage);
                 userinfo.ProfileImage = img;
             }
             return Ok(new Status(200, "Success", userinfo));
@@ -82,6 +83,8 @@ namespace AuthApi.Controllers
         public async Task<ActionResult<List<UserImages>>> ShowImages()
         {
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var user = await _context.AllUsers.SingleAsync(u => u.Email == userEmail);
+            int userID = user.Id;
             var result = _userService.ShowImage(userEmail);
             if (result is null)
             {
@@ -98,7 +101,7 @@ namespace AuthApi.Controllers
             }
             foreach (var res in resultList)
             {
-                res.UserImage = string.Format("https://localhost:7184/Resources/{0}", res.UserImage);
+                res.UserImage = string.Format("https://localhost:7184/Resources/{0}/{1}",userID.ToString(), res.UserImage);
             }
 
             return Ok(new Status(200, "User Images", resultList));
