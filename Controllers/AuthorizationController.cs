@@ -5,9 +5,12 @@ using AuthApi.Repositories.Abstract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PhotosWebApp.Models.Users;
+using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
+using static System.Net.WebRequestMethods;
 
 namespace AuthApi.Controllers
 {
@@ -15,6 +18,9 @@ namespace AuthApi.Controllers
     [ApiController]
     public class AuthorizationController : ControllerBase
     {
+        private static Dictionary<string, RegistrationModel> pendingRegistrationDictionary = new Dictionary<string, RegistrationModel>();
+
+        private readonly OTPController _otpController;
         private readonly DatabaseContext _context;
         private readonly IFileService _fileService;
         private readonly IEmailService _emailService;
@@ -26,7 +32,8 @@ namespace AuthApi.Controllers
             RoleManager<IdentityRole> roleManager,
             ITokenService tokenService,
             IEmailService emailService,
-            IFileService fs
+            IFileService fs,
+            OTPController otpController
             )
         {
             this._context = context;
@@ -35,6 +42,7 @@ namespace AuthApi.Controllers
             this._tokenService = tokenService;
             this._emailService = emailService;
             this._fileService = fs;
+            this._otpController = otpController;
         }
 
 
@@ -93,8 +101,11 @@ namespace AuthApi.Controllers
                 }));
 
             }
+
             //login failed condition
             return Ok(new Status(400, "Not able to login server error", null));
+
+           
         }
 
         //registration for user
@@ -122,6 +133,69 @@ namespace AuthApi.Controllers
             {
                 return Ok(new Status(400, "Please Upload an Image", null));
             }
+
+
+            if (pendingRegistrationDictionary.ContainsKey(model.Email)) { pendingRegistrationDictionary.Remove(model.Email); }
+
+            pendingRegistrationDictionary.Add(model.Email, model);
+
+            //Send Otp internally
+            string type = "registration";
+
+            dynamic result = await _otpController.generateOtp(model.Email, type);
+            
+            
+            if(result.Value.StatusCode == 200)
+            {
+                return Ok(new Status(200, result.Value.Message, null));
+            }
+            
+
+            return Ok(new Status(400, result.Value.Message, null));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmRegistration(string emailID, int otp)
+        {
+            if (!pendingRegistrationDictionary.ContainsKey(emailID))
+            {
+                return Ok(new Status(400, "No Record Found for this Email ID. Please Register Again", null));
+            }
+
+            // ProceedToVerifyRegistration
+            //OTPModel otpModel = new OTPModel(emailID, "registration", otp, DateTime.Now);
+
+            dynamic resp = await _otpController.verifyOtp(emailID, otp);
+
+            if (resp.Value.StatusCode != 200)
+            {
+                return Ok(new Status(400, resp.Value.Message, null));
+            }
+
+            RegistrationModel model = pendingRegistrationDictionary[emailID];
+
+
+            ///////////////////////////////////
+            var status = new Status();
+            if (!ModelState.IsValid)
+            {
+                return Ok(new Status(400, "Please pass all the Fields", null));
+            }
+            // check if user exists
+            var userExists = await userManager.FindByNameAsync(model.Username);
+            if (userExists != null)
+            {
+                return Ok(new Status(400, "Username already taken", null));
+            }
+            var emailExist = await userManager.FindByEmailAsync(model.Email);
+            if (emailExist != null)
+            {
+                return Ok(new Status(400, "Email already register", null));
+            }
+            if (model.ImageFile == null)
+            {
+                return Ok(new Status(400, "Please Upload an Image", null));
+            }
             var user = new ApplicationUser
             {
                 UserName = model.Username,
@@ -129,6 +203,8 @@ namespace AuthApi.Controllers
                 Email = model.Email,
                 Name = model.Name
             };
+
+
             // create a user here
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
@@ -217,9 +293,8 @@ namespace AuthApi.Controllers
 
         }
 
-
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(ChangePasswordModel model)
+        public async Task<IActionResult> ChangePassword(ChangePasswordModel model) //Not forgotPassword
         {
             var status = new Status();
             // check validations
@@ -245,6 +320,64 @@ namespace AuthApi.Controllers
             if (!result.Succeeded)
             {
                 return Ok(new Status(400, "Failed to change password", null));
+            }
+            return Ok(new Status(200, "Password has changed successfully", result));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string emailID) 
+        {
+            var userExists = await userManager.FindByEmailAsync(emailID);
+            if (userExists == null)
+            {
+                return Ok(new Status(400, "Invalid Email ID. User Doesn't Exist.", null));
+            }
+
+            dynamic result = await _otpController.generateOtp(emailID, "resetPassword");
+
+
+            if (result.Value.StatusCode == 200)
+            {
+                return Ok(new Status(200, result.Value.Message, null));
+            }
+
+            return Ok(new Status(400, result.Value.Message, null));
+        }
+       
+        [HttpPost]
+        public async Task<IActionResult> SetNewPassword(SetNewPasswordModel model)
+        {
+            var status = new Status();
+            // check validations
+            if (!ModelState.IsValid)
+            {
+                return Ok(new Status(400, "please pass all the valid fields", null));
+            }
+            // lets find the user
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user is null)
+            {
+                return Ok(new Status(400, "Invalid email id", null));
+            }
+
+            dynamic resp = await _otpController.verifyOtp(model.Email, model.Otp);
+
+            if (resp.Value.StatusCode != 200)
+            {
+                return Ok(new Status(400, resp.Value.Message, null));
+            }
+
+            //Otp Verified Till Here
+
+            // change password here
+            await userManager.RemovePasswordAsync(user);
+            
+
+            var result = await userManager.AddPasswordAsync(user, model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                return Ok(new Status(400, "Otp Verified But Failed to change password. ", null));
             }
             return Ok(new Status(200, "Password has changed successfully", result));
         }

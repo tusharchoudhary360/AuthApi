@@ -1,4 +1,5 @@
-﻿using AuthApi.Models.Domain;
+﻿using AuthApi.Controllers;
+using AuthApi.Models.Domain;
 using AuthApi.Repositories.Abstract;
 using Microsoft.EntityFrameworkCore;
 
