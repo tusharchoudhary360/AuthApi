@@ -55,12 +55,15 @@ builder.Services.AddAuthentication(options =>
 var emailConfig =configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
 
-
 builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddTransient<IFileService, FileService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddTransient<AuthApi.Controllers.OTPController, AuthApi.Controllers.OTPController>();
+//builder.Services.AddScoped<IOtpService, OtpService>();
+
+//builder.Services.AddMvc().AddControllersAsServices();
 
 builder.Services.AddSwaggerGen(options =>
 {
