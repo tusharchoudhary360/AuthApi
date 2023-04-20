@@ -107,5 +107,20 @@ namespace AuthApi.Controllers
             return Ok(new Status(200, "User Images", resultList));
         }
 
+        [HttpPost]
+        public async Task<IActionResult> DeleteImageAsync(int id )
+        {
+            if (id==null)
+            {
+                return Ok(new Status(400, "Please pass an id of image", null));
+            }
+            var userEmail = User.FindFirstValue(ClaimTypes.Email);
+            var result = _userService.DeleteImage(id, userEmail);
+            if (result.Result is null)
+            {
+                return Ok(new Status(400, "Error while deleting image", null));
+            }
+            return Ok(new Status(200,result.Result, null));
+        }
     }
 }
