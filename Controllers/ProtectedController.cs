@@ -12,7 +12,7 @@ namespace AuthApi.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "User")]
     public class ProtectedController : ControllerBase
     {
         //private readonly UserManager<ApplicationUser> _userManager;
