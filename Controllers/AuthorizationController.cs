@@ -10,6 +10,7 @@ using System.Dynamic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
+using System.Text.Json.Nodes;
 using static System.Net.WebRequestMethods;
 
 namespace AuthApi.Controllers
@@ -140,9 +141,11 @@ namespace AuthApi.Controllers
             pendingRegistrationDictionary.Add(model.Email, model);
 
             //Send Otp internally
-            string type = "registration";
 
-            dynamic result = await _otpController.generateOtp(model.Email, type);
+
+            GenerateOTPModel generateOTPModel = new GenerateOTPModel(model.Email, "registration");
+
+            dynamic result = await _otpController.generateOtp(generateOTPModel);
             
             
             if(result.Value.StatusCode == 200)
@@ -155,9 +158,9 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConfirmRegistration(string emailID, int otp)
+        public async Task<IActionResult> ConfirmRegistration(ConfirmRegistrationModel confirmRegistrationModel)
         {
-            if (!pendingRegistrationDictionary.ContainsKey(emailID))
+            if (!pendingRegistrationDictionary.ContainsKey(confirmRegistrationModel.Email))
             {
                 return Ok(new Status(400, "No Record Found for this Email ID. Please Register Again", null));
             }
@@ -165,14 +168,14 @@ namespace AuthApi.Controllers
             // ProceedToVerifyRegistration
             //OTPModel otpModel = new OTPModel(emailID, "registration", otp, DateTime.Now);
 
-            dynamic resp = await _otpController.verifyOtp(emailID, otp);
+            dynamic resp = await _otpController.verifyOtp(confirmRegistrationModel.Email, confirmRegistrationModel.otp);
 
             if (resp.Value.StatusCode != 200)
             {
                 return Ok(new Status(400, resp.Value.Message, null));
             }
 
-            RegistrationModel model = pendingRegistrationDictionary[emailID];
+            RegistrationModel model = pendingRegistrationDictionary[confirmRegistrationModel.Email];
 
 
             ///////////////////////////////////
@@ -325,15 +328,17 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ForgotPassword(string emailID) 
+        public async Task<IActionResult> ForgotPassword([FromBody]ForgotPasswordModel forgotPasswordModel) 
         {
-            var userExists = await userManager.FindByEmailAsync(emailID);
+            var userExists = await userManager.FindByEmailAsync(forgotPasswordModel.Email);
             if (userExists == null)
             {
                 return Ok(new Status(400, "Invalid Email ID. User Doesn't Exist.", null));
             }
 
-            dynamic result = await _otpController.generateOtp(emailID, "resetPassword");
+            GenerateOTPModel generateOTPModel = new GenerateOTPModel(forgotPasswordModel.Email, "resetPassword");
+
+            dynamic result = await _otpController.generateOtp(generateOTPModel);
 
 
             if (result.Value.StatusCode == 200)
