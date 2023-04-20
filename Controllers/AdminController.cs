@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PhotosWebApp.Models;
 using System.Data;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Claims;
 
 namespace AuthApi.Controllers
@@ -41,7 +43,7 @@ namespace AuthApi.Controllers
             {
                 if (res.ProfileImage != null)
                 {
-                    string img = string.Format("https://localhost:7184/Resources/ProfileImages/{0}", res.ProfileImage);
+                    string img = $"{enums.apiUrl}/Resources/ProfileImages/{res.ProfileImage}";
                     res.ProfileImage = img;
                 }
             }
@@ -58,7 +60,7 @@ namespace AuthApi.Controllers
             }
             if (result.ProfileImage != null)
             {
-                 string img = string.Format("https://localhost:7184/Resources/ProfileImages/{0}", result.ProfileImage);
+                 string img = $"{enums.apiUrl}/Resources/ProfileImages/{result.ProfileImage}";
                  result.ProfileImage = img;
             }
             return Ok(new Status(200, "Success", result));

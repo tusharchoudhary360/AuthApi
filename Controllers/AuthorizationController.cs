@@ -297,7 +297,7 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ChangePassword(ChangePasswordModel model) //Not forgotPassword
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model) //Not forgotPassword
         {
             var status = new Status();
             // check validations
