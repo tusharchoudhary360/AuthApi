@@ -90,16 +90,21 @@ namespace AuthApi.Controllers
                 {
                     return BadRequest(ex.Message);
                 }
-
-                return Ok(new Status(200, "Login Success",new LoginResponse
+                var roles="";
+                foreach (var role in userRoles)
+                {
+                    roles = role.ToString();
+                }
+                return Ok(new Status(200, "Login Success", new LoginResponse
                 {
                     Name = user.Name,
                     Username = user.UserName,
-                    Email =user.Email,
+                    Email = user.Email,
+                    Role = roles,
                     Token = token.TokenString,
                     RefreshToken = refreshToken,
                     Expiration = token.ValidTo
-                }));
+                })); ;
 
             }
 
