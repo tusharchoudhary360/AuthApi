@@ -51,23 +51,23 @@ namespace AuthApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> generateOtp(string emailID, string type) //type can be resetPassword or registration
+        public async Task<IActionResult> generateOtp([FromBody] GenerateOTPModel generateOtpModel) //type can be resetPassword or registration
         {
-            if (type == "registration")
+            if (generateOtpModel.type == "registration")
             {
-                var user = await userManager.FindByEmailAsync(emailID);
+                var user = await userManager.FindByEmailAsync(generateOtpModel.Email);
                 if (user != null)
                 {
                     return Ok(new Status(400, "User Already Exists. Please Log in", null));
                 }
 
-                if (otpDictionary.ContainsKey(emailID)) { otpDictionary.Remove(emailID); }
+                if (otpDictionary.ContainsKey(generateOtpModel.Email)) { otpDictionary.Remove(generateOtpModel.Email); }
 
-                OTPModel otpModel = new OTPModel(emailID, type, getOTP(), DateTime.Now.AddMinutes(5));
+                OTPModel otpModel = new OTPModel(generateOtpModel.Email, generateOtpModel.type, getOTP(), DateTime.Now.AddMinutes(5));
 
                 try
                 {
-                    SendEmail(otpModel, type); //
+                    SendEmail(otpModel, generateOtpModel.type); //
                 }
 
                 catch (Exception ex)
@@ -75,14 +75,14 @@ namespace AuthApi.Controllers
                     return Ok(new Status(400, "Error Occured While Sending OTP On Your Email", null));
                 }
 
-                otpDictionary.Add(emailID, otpModel);
+                otpDictionary.Add(generateOtpModel.Email, otpModel);
 
                 return Ok(new Status(200, "OTP has been sent successfully on you email id", null));
             }
 
-            else if (type == "resetPassword")
+            else if (generateOtpModel.type == "resetPassword")
             {
-                var user = await userManager.FindByEmailAsync(emailID);
+                var user = await userManager.FindByEmailAsync(generateOtpModel.Email);
                 if (user == null)
                 {
                     return Ok(new Status(400, "Invalid Email ID. User Does Not Exist", null));
@@ -90,13 +90,13 @@ namespace AuthApi.Controllers
 
                 //Generate OTP & Send opt to Email ID
 
-                if (otpDictionary.ContainsKey(emailID)) { otpDictionary.Remove(emailID); } //Removing if other OTP Already Exists else will throw exception
+                if (otpDictionary.ContainsKey(generateOtpModel.Email)) { otpDictionary.Remove(generateOtpModel.Email); } //Removing if other OTP Already Exists else will throw exception
 
-                OTPModel otpModel = new OTPModel(emailID, type, getOTP(), DateTime.Now.AddMinutes(5));
+                OTPModel otpModel = new OTPModel(generateOtpModel.Email, generateOtpModel.type, getOTP(), DateTime.Now.AddMinutes(5));
 
                 try
                 {
-                    SendEmail(otpModel, type); //
+                    SendEmail(otpModel, generateOtpModel.type); //
                 }
 
                 catch (Exception ex)
@@ -104,7 +104,7 @@ namespace AuthApi.Controllers
                     return Ok(new Status(400, "Error Occured While Sending OTP On Your Email", null));
                 }
 
-                otpDictionary.Add(emailID, otpModel);
+                otpDictionary.Add(generateOtpModel.Email, otpModel );
 
                 return Ok(new Status(200, "OTP has been sent successfully on you registered email id", null));
             }
