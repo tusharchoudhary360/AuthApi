@@ -13,8 +13,7 @@ namespace AuthApi.Repositories.Domain
 
         public Tuple<int, string> SaveImage(IFormFile imageFile)
         {
-            try
-            {
+           
                 var contentPath = this.environment.ContentRootPath;
                 var path = Path.Combine(contentPath, "Uploads","ProfileImages");
                 if (!Directory.Exists(path))
@@ -32,15 +31,10 @@ namespace AuthApi.Repositories.Domain
                 var newFileName = uniqueString + ext;
                 var fileWithPath = Path.Combine(path, newFileName);
                 var stream = new FileStream(fileWithPath, FileMode.Create);
-                imageFile.CopyTo(stream);
-                stream.Close();
+               
                 return new Tuple<int, string>(1, newFileName);
 
-            }
-            catch (Exception ex)
-            {
-                return new Tuple<int, string>(0, "Error has occured");
-            }
+           
         }
 
         public bool DeleteImage(string imageFileName)

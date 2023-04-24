@@ -53,7 +53,6 @@ namespace AuthApi.Controllers
                 userinfo.ProfileImage = img;
             }
             return Ok(new Status(200, "Success", userinfo));
-
         }
 
         [HttpPost]
