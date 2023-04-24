@@ -251,7 +251,7 @@ namespace AuthApi.Controllers
 
         // registration Admin
         [HttpPost]
-        public async Task<IActionResult> RegistrationAdmin([FromBody] RegistrationModel model)
+        public async Task<IActionResult> RegistrationAdmin([FromForm] RegistrationModel model)
         {
             var status = new Status();
             if (!ModelState.IsValid)
