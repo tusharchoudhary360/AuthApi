@@ -51,9 +51,9 @@ namespace AuthApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<AllUsers>> GetSingleUser(int id)
+        public async Task<ActionResult<AllUsers>> GetSingleUser(JustId model)
         {
-            var result = await _adminService.GetSingleUser(id);
+            var result = await _adminService.GetSingleUser(model.id);
             if (result is null)
             {
                 return Ok(new Status(404, "User not exist",null));

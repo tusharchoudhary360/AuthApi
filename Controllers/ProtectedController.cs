@@ -101,21 +101,21 @@ namespace AuthApi.Controllers
             }
             foreach (var res in resultList)
             {
-                res.UserImage = string.Format("https://localhost:7184/Resources/{0}/{1}",userID.ToString(), res.UserImage);
+                res.UserImage = string.Format("https://localhost:7184/Resources/{0}/{1}", userID.ToString(), res.UserImage);
             }
 
             return Ok(new Status(200, "User Images", resultList));
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteImageAsync(int id )
+        public async Task<IActionResult> DeleteImageAsync(JustId model )
         {
-            if (id==null)
+            if (model.id==null)
             {
                 return Ok(new Status(400, "Please pass an id of image", null));
             }
             var userEmail = User.FindFirstValue(ClaimTypes.Email);
-            var result = _userService.DeleteImage(id, userEmail);
+            var result = _userService.DeleteImage(model.id, userEmail);
             if (result.Result is null)
             {
                 return Ok(new Status(400, "Error while deleting image", null));
