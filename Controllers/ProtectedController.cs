@@ -66,7 +66,9 @@ namespace AuthApi.Controllers
             var result = _userService.AddImage(model.formFile, userEmail);
             if (result is null)
             {
-                return Ok(new Status(400, "Error while adding image", null));
+                var allowedExtentions = new string[] { ".jpg", ".png", ".jpeg", ".PNG", ".JPG", ".JPEG" };
+                string msg = string.Format("Only {0} extensions are allowed", string.Join(",", allowedExtentions));
+                return Ok(new Status(400, msg, null));
             }
             var userImageInstance = new UserImages
             {

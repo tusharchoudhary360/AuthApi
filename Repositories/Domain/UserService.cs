@@ -48,11 +48,11 @@ namespace AuthApi.Repositories.Domain
                     Directory.CreateDirectory(path);
                 }
                 var ext = Path.GetExtension(imageFile.FileName);
-                var allowedExtentions = new string[] { ".jpg", ".png", ".jpeg" };
+                var allowedExtentions = new string[] { ".jpg", ".png", ".jpeg",".PNG",".JPG",".JPEG" };
                 if (!allowedExtentions.Contains(ext))
                 {
                     string msg = string.Format("Only {0} extensions are allowed", string.Join(",", allowedExtentions));
-                    return msg;
+                    return null;
                 }
                 string uniqueString = Guid.NewGuid().ToString();
                 var newFileName = uniqueString + ext;
@@ -65,7 +65,7 @@ namespace AuthApi.Repositories.Domain
             }
             catch (Exception ex)
             {
-                return "Error has occured";
+                return null;
             }
         }
 
